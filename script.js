@@ -91,89 +91,109 @@ const QUESTIONS_DATABASE = {
     ]
 };
 
-// Game Objects - Initialize after DOM is ready
+// Game variables - will be initialized when DOM loads
 let canvas;
 let ctx;
-
-let gameState = {
-    gameRunning: false,
-    gamePaused: false,
-    level: 1,
-    playerScore: 0,
-    computerScore: 0,
-    pointsPerLevel: 5,
-    ballSpeed: BALL_SPEED_INITIAL,
-    currentQuestionIndex: 0,
-    selectedAnswer: null,
-    answerCorrect: null
-};
-
-// Paddle Object
-const playerPaddle = {
-    x: 10,
-    y: CANVAS_HEIGHT / 2 - PADDLE_HEIGHT / 2,
-    width: PADDLE_WIDTH,
-    height: PADDLE_HEIGHT,
-    dy: 0
-};
-
-const computerPaddle = {
-    x: CANVAS_WIDTH - PADDLE_WIDTH - 10,
-    y: CANVAS_HEIGHT / 2 - PADDLE_HEIGHT / 2,
-    width: PADDLE_WIDTH,
-    height: PADDLE_HEIGHT,
-    speed: 3
-};
-
-// Ball Object
-const ball = {
-    x: CANVAS_WIDTH / 2,
-    y: CANVAS_HEIGHT / 2,
-    dx: gameState.ballSpeed,
-    dy: gameState.ballSpeed,
-    size: BALL_SIZE,
-    speed: gameState.ballSpeed
-};
-
-// Mouse tracking
+let gameState;
+let playerPaddle;
+let computerPaddle;
+let ball;
 let mouseY = 0;
+let gameLoopId = null;
 
-// Initialize when DOM is loaded
+// Initialize everything when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-    // Get canvas and context
+    console.log('✅ DOM Loaded - Initializing game...');
+    
+    // Get canvas
     canvas = document.getElementById('gameCanvas');
+    if (!canvas) {
+        console.error('❌ Canvas element not found!');
+        return;
+    }
+    
+    // Get context
     ctx = canvas.getContext('2d');
-
-    // Set canvas to correct size
+    if (!ctx) {
+        console.error('❌ Cannot get 2D context!');
+        return;
+    }
+    
+    // Set canvas size
     canvas.width = CANVAS_WIDTH;
     canvas.height = CANVAS_HEIGHT;
-
+    console.log('✅ Canvas initialized: ' + CANVAS_WIDTH + 'x' + CANVAS_HEIGHT);
+    
+    // Initialize game state
+    gameState = {
+        gameRunning: false,
+        gamePaused: false,
+        level: 1,
+        playerScore: 0,
+        computerScore: 0,
+        pointsPerLevel: 5,
+        ballSpeed: BALL_SPEED_INITIAL,
+        currentQuestionIndex: 0,
+        selectedAnswer: null,
+        answerCorrect: null
+    };
+    
+    // Initialize paddles
+    playerPaddle = {
+        x: 10,
+        y: CANVAS_HEIGHT / 2 - PADDLE_HEIGHT / 2,
+        width: PADDLE_WIDTH,
+        height: PADDLE_HEIGHT,
+        dy: 0
+    };
+    
+    computerPaddle = {
+        x: CANVAS_WIDTH - PADDLE_WIDTH - 10,
+        y: CANVAS_HEIGHT / 2 - PADDLE_HEIGHT / 2,
+        width: PADDLE_WIDTH,
+        height: PADDLE_HEIGHT,
+        speed: 3
+    };
+    
+    // Initialize ball
+    ball = {
+        x: CANVAS_WIDTH / 2,
+        y: CANVAS_HEIGHT / 2,
+        dx: gameState.ballSpeed,
+        dy: gameState.ballSpeed,
+        size: BALL_SIZE,
+        speed: gameState.ballSpeed
+    };
+    
     // Event Listeners
-    canvas.addEventListener('mousemove', (e) => {
+    canvas.addEventListener('mousemove', function(e) {
         const rect = canvas.getBoundingClientRect();
         mouseY = e.clientY - rect.top;
     });
 
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', function(e) {
         if (e.key === 'ArrowUp') playerPaddle.dy = -6;
         if (e.key === 'ArrowDown') playerPaddle.dy = 6;
     });
 
-    document.addEventListener('keyup', (e) => {
+    document.addEventListener('keyup', function(e) {
         if (e.key === 'ArrowUp' || e.key === 'ArrowDown') playerPaddle.dy = 0;
     });
 
+    // Button listeners
     document.getElementById('startBtn').addEventListener('click', startGame);
     document.getElementById('pauseBtn').addEventListener('click', togglePause);
     document.getElementById('resetBtn').addEventListener('click', resetGame);
     document.getElementById('nextLevelBtn').addEventListener('click', nextLevel);
-
-    // Draw initial canvas
+    
+    // Draw initial state
     draw();
+    console.log('✅ Game initialized successfully!');
 });
 
-// Initialize Questions
+// Load Question
 function loadQuestion() {
+    console.log('📝 Loading question for level ' + gameState.level);
     const levelQuestions = QUESTIONS_DATABASE[`level${gameState.level}`];
     const question = levelQuestions[gameState.currentQuestionIndex % levelQuestions.length];
     
@@ -186,7 +206,9 @@ function loadQuestion() {
         const btn = document.createElement('button');
         btn.textContent = option;
         btn.className = 'answer-btn';
-        btn.addEventListener('click', () => handleAnswer(index, question.correct));
+        btn.addEventListener('click', function() {
+            handleAnswer(index, question.correct);
+        });
         answerOptions.appendChild(btn);
     });
     
@@ -194,6 +216,7 @@ function loadQuestion() {
     gameState.answerCorrect = null;
 }
 
+// Handle Answer
 function handleAnswer(selectedIndex, correctIndex) {
     gameState.selectedAnswer = selectedIndex;
     gameState.answerCorrect = selectedIndex === correctIndex;
@@ -209,31 +232,38 @@ function handleAnswer(selectedIndex, correctIndex) {
     });
     
     if (gameState.answerCorrect) {
+        console.log('✅ Correct answer!');
         gameState.playerScore++;
         document.getElementById('playerScore').textContent = gameState.playerScore;
         checkLevelUp();
     } else {
+        console.log('❌ Wrong answer!');
         gameState.computerScore++;
         document.getElementById('computerScore').textContent = gameState.computerScore;
     }
     
-    setTimeout(() => {
+    setTimeout(function() {
         gameState.currentQuestionIndex++;
         loadQuestion();
     }, 1500);
 }
 
+// Check Level Up
 function checkLevelUp() {
     if (gameState.playerScore >= gameState.pointsPerLevel) {
+        console.log('🎉 Level ' + gameState.level + ' complete!');
         gameState.gameRunning = false;
+        if (gameLoopId) cancelAnimationFrame(gameLoopId);
         document.getElementById('levelComplete').style.display = 'flex';
         document.getElementById('levelCompleteText').textContent = 
-            `Congratulations! You've reached level ${gameState.level}! Next level will have tougher questions.`;
+            `Congratulations! You've completed level ${gameState.level}! Next level will have tougher questions.`;
         document.getElementById('pauseBtn').disabled = true;
     }
 }
 
+// Next Level
 function nextLevel() {
+    console.log('➡️ Moving to next level...');
     gameState.level++;
     gameState.playerScore = 0;
     gameState.computerScore = 0;
@@ -243,7 +273,6 @@ function nextLevel() {
     document.getElementById('level').textContent = gameState.level;
     document.getElementById('playerScore').textContent = '0';
     document.getElementById('computerScore').textContent = '0';
-    document.getElementById('nextLevel').textContent = gameState.pointsPerLevel;
     document.getElementById('levelComplete').style.display = 'none';
     loadQuestion();
     gameState.gameRunning = true;
@@ -251,11 +280,14 @@ function nextLevel() {
     gameLoop();
 }
 
+// Start Game
 function startGame() {
+    console.log('🎮 Game started!');
     gameState.gameRunning = true;
     gameState.gamePaused = false;
     document.getElementById('startBtn').disabled = true;
     document.getElementById('pauseBtn').disabled = false;
+    document.getElementById('pauseBtn').textContent = 'Pause';
     gameState.currentQuestionIndex = 0;
     gameState.playerScore = 0;
     gameState.computerScore = 0;
@@ -266,17 +298,22 @@ function startGame() {
     gameLoop();
 }
 
+// Toggle Pause
 function togglePause() {
     gameState.gamePaused = !gameState.gamePaused;
     document.getElementById('pauseBtn').textContent = gameState.gamePaused ? 'Resume' : 'Pause';
+    console.log(gameState.gamePaused ? '⏸️ Game paused' : '▶️ Game resumed');
     if (!gameState.gamePaused) {
         gameLoop();
     }
 }
 
+// Reset Game
 function resetGame() {
+    console.log('🔄 Game reset');
     gameState.gameRunning = false;
     gameState.gamePaused = false;
+    if (gameLoopId) cancelAnimationFrame(gameLoopId);
     gameState.level = 1;
     gameState.playerScore = 0;
     gameState.computerScore = 0;
@@ -287,18 +324,19 @@ function resetGame() {
     document.getElementById('level').textContent = '1';
     document.getElementById('playerScore').textContent = '0';
     document.getElementById('computerScore').textContent = '0';
-    document.getElementById('nextLevel').textContent = gameState.pointsPerLevel;
     document.getElementById('question').textContent = 'Click "Start Game" to begin!';
     document.getElementById('answerOptions').innerHTML = '';
     document.getElementById('levelComplete').style.display = 'none';
     
     document.getElementById('startBtn').disabled = false;
     document.getElementById('pauseBtn').disabled = true;
+    document.getElementById('pauseBtn').textContent = 'Pause';
     
     resetBallPosition();
     draw();
 }
 
+// Reset Ball Position
 function resetBallPosition() {
     ball.x = CANVAS_WIDTH / 2;
     ball.y = CANVAS_HEIGHT / 2;
@@ -306,20 +344,18 @@ function resetBallPosition() {
     ball.dy = (Math.random() - 0.5) * ball.speed;
 }
 
+// Update Player Paddle
 function updatePlayerPaddle() {
-    // Mouse control
     playerPaddle.y = mouseY - PADDLE_HEIGHT / 2;
-    
-    // Keyboard control (arrow keys)
     playerPaddle.y += playerPaddle.dy;
     
-    // Boundary checking
     if (playerPaddle.y < 0) playerPaddle.y = 0;
     if (playerPaddle.y + PADDLE_HEIGHT > CANVAS_HEIGHT) {
         playerPaddle.y = CANVAS_HEIGHT - PADDLE_HEIGHT;
     }
 }
 
+// Update Computer Paddle
 function updateComputerPaddle() {
     const computerCenter = computerPaddle.y + PADDLE_HEIGHT / 2;
     
@@ -335,6 +371,7 @@ function updateComputerPaddle() {
     }
 }
 
+// Update Ball
 function updateBall() {
     ball.x += ball.dx;
     ball.y += ball.dy;
@@ -382,6 +419,7 @@ function updateBall() {
     }
 }
 
+// Draw Function
 function draw() {
     if (!ctx) return;
     
@@ -420,6 +458,7 @@ function draw() {
     ctx.stroke();
 }
 
+// Game Loop
 function gameLoop() {
     if (!gameState.gameRunning || gameState.gamePaused) {
         draw();
@@ -431,5 +470,7 @@ function gameLoop() {
     updateBall();
     draw();
     
-    requestAnimationFrame(gameLoop);
+    gameLoopId = requestAnimationFrame(gameLoop);
 }
+
+console.log('✅ Script loaded successfully');
