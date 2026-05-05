@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare Insurance Pong Game</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 Healthcare Insurance Pong Game</h1>
+            <p>Answer healthcare questions correctly to win!</p>
+        </div>
+
+        <div class="game-section">
+            <div class="game-info">
+                <div class="info-box">
+                    <span class="info-label">Level</span>
+                    <span class="info-value" id="level">1</span>
+                </div>
+                <div class="info-box">
+                    <span class="info-label">Your Score</span>
+                    <span class="info-value" id="playerScore">0</span>
+                </div>
+                <div class="info-box">
+                    <span class="info-label">Computer Score</span>
+                    <span class="info-value" id="computerScore">0</span>
+                </div>
+                <div class="info-box">
+                    <span class="info-label">Points to Level Up</span>
+                    <span class="info-value" id="nextLevel">5</span>
+                </div>
+            </div>
+
+            <canvas id="gameCanvas" width="800" height="400"></canvas>
+
+            <div class="controls">
+                <button id="startBtn" class="btn btn-start">Start Game</button>
+                <button id="pauseBtn" class="btn btn-pause" disabled>Pause</button>
+                <button id="resetBtn" class="btn btn-reset">Reset</button>
+            </div>
+
+            <div class="instructions">
+                <p><strong>🖱️ Mouse:</strong> Move your paddle up/down</p>
+                <p><strong>⬆️⬇️ Arrow Keys:</strong> Alternative paddle control</p>
+                <p><strong>✅ Correct Answer:</strong> You score a point!</p>
+                <p><strong>❌ Wrong Answer:</strong> Computer scores a point</p>
+            </div>
+        </div>
+
+        <div class="qa-section">
+            <div class="question-box">
+                <h2 id="question">Click "Start Game" to begin!</h2>
+            </div>
+
+            <div id="answerOptions" class="answer-options"></div>
+        </div>
+
+        <div id="levelComplete" class="modal">
+            <div class="modal-content">
+                <h2 id="levelCompleteText">Congratulations!</h2>
+                <p>Next level will have:</p>
+                <ul>
+                    <li>Faster ball speed</li>
+                    <li>More challenging healthcare questions</li>
+                    <li>Tougher computer AI</li>
+                </ul>
+                <button id="nextLevelBtn" class="btn btn-primary">Next Level</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
