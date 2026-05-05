@@ -91,9 +91,9 @@ const QUESTIONS_DATABASE = {
     ]
 };
 
-// Game Objects
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+// Game Objects - Initialize after DOM is ready
+let canvas;
+let ctx;
 
 let gameState = {
     gameRunning: false,
@@ -138,25 +138,39 @@ const ball = {
 // Mouse tracking
 let mouseY = 0;
 
-// Event Listeners
-document.addEventListener('mousemove', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    mouseY = e.clientY - rect.top;
-});
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Get canvas and context
+    canvas = document.getElementById('gameCanvas');
+    ctx = canvas.getContext('2d');
 
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowUp') playerPaddle.dy = -6;
-    if (e.key === 'ArrowDown') playerPaddle.dy = 6;
-});
+    // Set canvas to correct size
+    canvas.width = CANVAS_WIDTH;
+    canvas.height = CANVAS_HEIGHT;
 
-document.addEventListener('keyup', (e) => {
-    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') playerPaddle.dy = 0;
-});
+    // Event Listeners
+    canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        mouseY = e.clientY - rect.top;
+    });
 
-document.getElementById('startBtn').addEventListener('click', startGame);
-document.getElementById('pauseBtn').addEventListener('click', togglePause);
-document.getElementById('resetBtn').addEventListener('click', resetGame);
-document.getElementById('nextLevelBtn').addEventListener('click', nextLevel);
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowUp') playerPaddle.dy = -6;
+        if (e.key === 'ArrowDown') playerPaddle.dy = 6;
+    });
+
+    document.addEventListener('keyup', (e) => {
+        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') playerPaddle.dy = 0;
+    });
+
+    document.getElementById('startBtn').addEventListener('click', startGame);
+    document.getElementById('pauseBtn').addEventListener('click', togglePause);
+    document.getElementById('resetBtn').addEventListener('click', resetGame);
+    document.getElementById('nextLevelBtn').addEventListener('click', nextLevel);
+
+    // Draw initial canvas
+    draw();
+});
 
 // Initialize Questions
 function loadQuestion() {
@@ -247,6 +261,7 @@ function startGame() {
     gameState.computerScore = 0;
     document.getElementById('playerScore').textContent = '0';
     document.getElementById('computerScore').textContent = '0';
+    resetBallPosition();
     loadQuestion();
     gameLoop();
 }
@@ -368,6 +383,8 @@ function updateBall() {
 }
 
 function draw() {
+    if (!ctx) return;
+    
     // Clear canvas
     ctx.fillStyle = '#1a1a2e';
     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
@@ -381,15 +398,15 @@ function draw() {
     ctx.stroke();
     ctx.setLineDash([]);
     
-    // Player paddle (left)
+    // Player paddle (left) - Green
     ctx.fillStyle = '#10b981';
     ctx.fillRect(playerPaddle.x, playerPaddle.y, playerPaddle.width, playerPaddle.height);
     
-    // Computer paddle (right)
+    // Computer paddle (right) - Red
     ctx.fillStyle = '#ef4444';
     ctx.fillRect(computerPaddle.x, computerPaddle.y, computerPaddle.width, computerPaddle.height);
     
-    // Ball
+    // Ball - Yellow
     ctx.fillStyle = '#fbbf24';
     ctx.beginPath();
     ctx.arc(ball.x, ball.y, ball.size, 0, Math.PI * 2);
@@ -416,6 +433,3 @@ function gameLoop() {
     
     requestAnimationFrame(gameLoop);
 }
-
-// Initial draw
-draw();
